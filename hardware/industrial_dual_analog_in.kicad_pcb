@@ -3,7 +3,7 @@
   (general
     (links 158)
     (no_connects 1)
-    (area 115.524999 79.924999 155.675001 120.075001)
+    (area 17.19714 79.144999 156.455001 193.31)
     (thickness 1.6)
     (drawings 26)
     (tracks 654)
@@ -23,7 +23,7 @@
 
   (layers
     (0 F.Cu signal)
-    (31 B.Cu signal)
+    (31 B.Cu signal hide)
     (32 B.Adhes user)
     (33 F.Adhes user)
     (34 B.Paste user)
@@ -42,7 +42,7 @@
   )
 
   (setup
-    (last_trace_width 0.7)
+    (last_trace_width 0.254)
     (user_trace_width 0.2)
     (user_trace_width 0.25)
     (user_trace_width 0.3)
@@ -8182,7 +8182,7 @@
   (gr_text 0 (at 147.3 84.6) (layer F.SilkS)
     (effects (font (size 0.7 0.7) (thickness 0.15)))
   )
-  (gr_text S (at 144.1 84.6) (layer F.SilkS)
+  (gr_text Status (at 144.1 84.6) (layer F.SilkS)
     (effects (font (size 0.7 0.7) (thickness 0.15)))
   )
   (gr_text "Industrial Dual Analog In\n2.0" (at 153.6 100 90) (layer F.SilkS)
