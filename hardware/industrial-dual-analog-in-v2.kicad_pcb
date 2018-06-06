@@ -1,4 +1,4 @@
-(kicad_pcb (version 4) (host pcbnew 4.0.7-e2-6376~58~ubuntu17.04.1)
+(kicad_pcb (version 4) (host pcbnew 4.0.7-e2-6376~61~ubuntu18.04.1)
 
   (general
     (links 158)
@@ -74,7 +74,8 @@
     (pad_size 0.45 1.75)
     (pad_drill 0)
     (pad_to_mask_clearance 0.2)
-    (aux_axis_origin 0 0)
+    (aux_axis_origin 115.6 80)
+    (grid_origin 115.6 80)
     (visible_elements FFFFEF3F)
     (pcbplotparams
       (layerselection 0x00030_80000001)
@@ -5725,12 +5726,12 @@
       (xy 3.1242 3.1242)) (layer F.SilkS) (width 0.00254))
   )
 
-  (module kicad-libraries:PINTST (layer F.Cu) (tedit 5204E9AB) (tstamp 59107864)
+  (module kicad-libraries:PINTST (layer F.Cu) (tedit 5B17E835) (tstamp 59107864)
     (at 141.8 105.65)
     (descr "module 1 pin (ou trou mecanique de percage)")
     (tags DEV)
     (path /542949F5)
-    (fp_text reference P2 (at 0 -1.26746) (layer F.SilkS)
+    (fp_text reference P2 (at 0.8 -0.95) (layer F.SilkS) hide
       (effects (font (size 0.508 0.508) (thickness 0.127)))
     )
     (fp_text value CONN_1 (at 0 1.27) (layer F.SilkS) hide
@@ -7618,11 +7619,11 @@
   )
 
   (module kicad-libraries:CE_5mm (layer B.Cu) (tedit 5922FFD4) (tstamp 5AA8047F)
-    (at 125.1 116.2 270)
-    (fp_text reference VAL (at 0 0 270) (layer B.SilkS) hide
+    (at 125.6 100 90)
+    (fp_text reference VAL (at 0 0 90) (layer B.SilkS) hide
       (effects (font (size 0.2 0.2) (thickness 0.05)) (justify mirror))
     )
-    (fp_text value CE_5mm (at 0 0 270) (layer B.SilkS) hide
+    (fp_text value CE_5mm (at 0 0 90) (layer B.SilkS) hide
       (effects (font (size 0.2 0.2) (thickness 0.05)) (justify mirror))
     )
     (fp_poly (pts (xy -0.55372 -1.67132) (xy -0.5715 -1.67386) (xy -0.57912 -1.6764) (xy -0.59436 -1.6764)
@@ -7712,11 +7713,11 @@
   )
 
   (module kicad-libraries:WEEE_7mm (layer B.Cu) (tedit 5922FFAE) (tstamp 5AA8397E)
-    (at 135.6 116.2 270)
-    (fp_text reference VAL (at 0 0 270) (layer B.SilkS) hide
+    (at 135.6 100 90)
+    (fp_text reference VAL (at 0 0 90) (layer B.SilkS) hide
       (effects (font (size 0.2 0.2) (thickness 0.05)) (justify mirror))
     )
-    (fp_text value WEEE_7mm (at 0.75 0 270) (layer B.SilkS) hide
+    (fp_text value WEEE_7mm (at 0.75 0 90) (layer B.SilkS) hide
       (effects (font (size 0.2 0.2) (thickness 0.05)) (justify mirror))
     )
     (fp_poly (pts (xy 2.032 -3.527778) (xy -0.014111 -3.527778) (xy -2.060222 -3.527778) (xy -2.060222 -3.019778)
@@ -7837,11 +7838,11 @@
   )
 
   (module kicad-libraries:Logo_CoMCU (layer B.Cu) (tedit 0) (tstamp 5AA86E8B)
-    (at 146.1 116.2 270)
-    (fp_text reference G*** (at 0 0 270) (layer B.SilkS) hide
+    (at 145.6 100 90)
+    (fp_text reference G*** (at 0 0 90) (layer B.SilkS) hide
       (effects (font (thickness 0.3)) (justify mirror))
     )
-    (fp_text value LOGO (at 0.75 0 270) (layer B.SilkS) hide
+    (fp_text value LOGO (at 0.75 0 90) (layer B.SilkS) hide
       (effects (font (thickness 0.3)) (justify mirror))
     )
     (fp_poly (pts (xy -1.083326 -1.807455) (xy -1.021749 -1.855631) (xy -0.996708 -1.88908) (xy -0.98448 -1.910311)
