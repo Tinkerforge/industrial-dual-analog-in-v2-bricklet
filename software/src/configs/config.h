@@ -37,6 +37,7 @@
 #define CHANNEL_BASED_COUNT 2
 
 #define CALLBACK_VALUE_TYPE CALLBACK_VALUE_TYPE_INT32
+#define CALLBACK_VALUE_CHANNEL_NUM 2
 
 #include "config_custom_bootloader.h"
 

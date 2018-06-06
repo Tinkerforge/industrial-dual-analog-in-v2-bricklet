@@ -27,23 +27,14 @@
 
 #include "mcp3911.h"
 
-uint8_t channel_based_handle_channel = 0;
-CallbackValue channel_based_cbv[CHANNEL_BASED_COUNT];
+uint8_t voltage_callback_channel = 0;
+CallbackValue_int32_t callback_values_voltage[CALLBACK_VALUE_CHANNEL_NUM];
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
-		case FID_GET_VOLTAGE: {
-			uint8_t channel = ((OnChannelGetCallbackValue *)message)->channel;
-			return channel_based_get_callback_value(message, response, &channel_based_cbv[channel]);
-		}
-		case FID_SET_VOLTAGE_CALLBACK_CONFIGURATION: {
-			uint8_t channel = ((OnChannelSetCallbackValueCallbackConfiguration *)message)->channel;
-			return channel_based_set_callback_value_callback_configuration(message, &channel_based_cbv[channel]);
-		}
-		case FID_GET_VOLTAGE_CALLBACK_CONFIGURATION: {
-			uint8_t channel = ((OnChannelGetCallbackValueCallbackConfiguration *)message)->channel;
-			return channel_based_get_callback_value_callback_configuration(message, response, &channel_based_cbv[channel]);
-		}
+		case FID_GET_VOLTAGE: return get_callback_value_int32_t(message, response, callback_values_voltage);
+		case FID_SET_VOLTAGE_CALLBACK_CONFIGURATION: return set_callback_value_callback_configuration_int32_t(message, callback_values_voltage);
+		case FID_GET_VOLTAGE_CALLBACK_CONFIGURATION: return get_callback_value_callback_configuration_int32_t(message, response, callback_values_voltage);
 		case FID_SET_SAMPLE_RATE: return set_sample_rate(message);
 		case FID_GET_SAMPLE_RATE: return get_sample_rate(message, response);
 		case FID_SET_CALIBRATION: return set_calibration(message);
@@ -108,12 +99,10 @@ BootloaderHandleMessageResponse get_channel_led_status_config(const GetChannelLE
 }
 
 bool handle_voltage_callback(void) {
-	bool ret = channel_based_handle_callback_value_callback(&channel_based_cbv[channel_based_handle_channel],
-	                                                        FID_CALLBACK_VOLTAGE,
-	                                                        channel_based_handle_channel);
+	bool ret = handle_callback_value_callback_int32_t(callback_values_voltage, voltage_callback_channel, FID_CALLBACK_VOLTAGE);
 
-	if(!(++channel_based_handle_channel < CHANNEL_BASED_COUNT)) {
-		channel_based_handle_channel = 0;
+	if(++voltage_callback_channel >= CALLBACK_VALUE_CHANNEL_NUM) {
+		voltage_callback_channel = 0;
 	}
 
 	return ret;
@@ -124,9 +113,7 @@ void communication_tick(void) {
 }
 
 void communication_init(void) {
-	for(uint8_t i = 0; i < CHANNEL_BASED_COUNT; i++) {
-		channel_based_callback_value_init(&channel_based_cbv[i], mcp3911_get_voltage);
-	}
+	callback_value_init_int32_t(callback_values_voltage, mcp3911_get_voltage);
 
 	communication_callback_init();
 }

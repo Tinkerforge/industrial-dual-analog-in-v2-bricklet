@@ -134,12 +134,9 @@ void mcp3911_tick(void) {
 			}
 
 			logd("RX %d BYTES FROM FIFO\n\r", spi_fifo_read_fifo(&mcp3911.spi_fifo, &mcp3911.spi_fifo_buf[0], 3));
-
 			logd("[0] = %d\n\r", mcp3911.spi_fifo_buf[0]);
 			logd("[1] = %d\n\r", mcp3911.spi_fifo_buf[1]);
 			logd("[2] = %d\n\r\n\r", mcp3911.spi_fifo_buf[2]);
-
-
 
 			mcp3911.spi_fifo.state = SPI_FIFO_STATE_IDLE;
 			XMC_USIC_CH_RXFIFO_Flush(mcp3911.spi_fifo.channel);
