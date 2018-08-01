@@ -1,0 +1,32 @@
+Needs["NETLink`"]
+LoadNETAssembly["Tinkerforge",NotebookDirectory[]<>"../../.."]
+
+host="localhost"
+port=4223
+uid="XYZ"(*Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0*)
+
+(*Create IPConnection and device object*)
+ipcon=NETNew["Tinkerforge.IPConnection"]
+idai=NETNew["Tinkerforge.BrickletIndustrialDualAnalogInV2",uid,ipcon]
+ipcon@Connect[host,port]
+
+(*Callback function for voltage callback*)
+VoltageCB[sender_,channel_,voltage_]:=
+ Module[{},
+  Print["Channel: "<>ToString[channel]];
+  Print["Voltage: "<>ToString[N[Quantity[voltage,"V/1000"]]]]
+ ]
+
+AddEventHandler[idai@VoltageCallback,VoltageCB]
+
+(*Configure threshold for voltage (channel 0) "greater than 10 V"*)
+(*with a debounce period of 10s (10000ms)*)
+option=Tinkerforge`BrickletIndustrialDualAnalogInV2`THRESHOLDUOPTIONUGREATER
+idai@SetVoltageCallbackConfiguration[0,10000,False,option,10*1000,0]
+
+Input["Click OK to exit"]
+
+(*Clean up*)
+ipcon@Disconnect[]
+ReleaseNETObject[idai]
+ReleaseNETObject[ipcon]

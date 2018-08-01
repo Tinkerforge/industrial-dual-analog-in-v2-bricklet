@@ -1,0 +1,19 @@
+Needs["NETLink`"]
+LoadNETAssembly["Tinkerforge",NotebookDirectory[]<>"../../.."]
+
+host="localhost"
+port=4223
+uid="XYZ"(*Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0*)
+
+(*Create IPConnection and device object*)
+ipcon=NETNew["Tinkerforge.IPConnection"]
+idai=NETNew["Tinkerforge.BrickletIndustrialDualAnalogInV2",uid,ipcon]
+ipcon@Connect[host,port]
+
+(*Get current voltage from channel 0*)
+Print["Voltage (Channel 0): "<>ToString[N[Quantity[idai@GetVoltage[0],"V/1000"]]]]
+
+(*Clean up*)
+ipcon@Disconnect[]
+ReleaseNETObject[idai]
+ReleaseNETObject[ipcon]
