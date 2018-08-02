@@ -49,17 +49,30 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 }
 
 BootloaderHandleMessageResponse set_sample_rate(const SetSampleRate *data) {
+	if (data->rate > SAMPLE_RATE_1_SPS) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	mcp3911.rate = data->rate;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_sample_rate(const GetSampleRate *data, GetSampleRate_Response *response) {
 	response->header.length = sizeof(GetSampleRate_Response);
+	response->rate = mcp3911.rate;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_calibration(const SetCalibration *data) {
+	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+		mcp3911.channels[i].cal_gain = data->gain[i];
+		mcp3911.channels[i].cal_offset = data->offset[i];
+	}
+
+	mcp3911_set_calibration();
+	mcp3911_calibration_eeprom_write();
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
@@ -67,16 +80,30 @@ BootloaderHandleMessageResponse set_calibration(const SetCalibration *data) {
 BootloaderHandleMessageResponse get_calibration(const GetCalibration *data, GetCalibration_Response *response) {
 	response->header.length = sizeof(GetCalibration_Response);
 
+	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+		response->gain[i] = mcp3911.channels[i].cal_gain;
+		response->offset[i] = mcp3911.channels[i].cal_offset;
+	}
+
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse get_adc_values(const GetADCValues *data, GetADCValues_Response *response) {
 	response->header.length = sizeof(GetADCValues_Response);
 
+	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+		response->value[i] = mcp3911.channels[i].adc_raw_value;
+	}
+
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig *data) {
+	if(data->channel > CALLBACK_VALUE_CHANNEL_NUM - 1) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	mcp3911.channel_leds[data->channel].config = data->config;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
@@ -84,16 +111,37 @@ BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response) {
 	response->header.length = sizeof(GetChannelLEDConfig_Response);
 
+	if(data->channel > CALLBACK_VALUE_CHANNEL_NUM - 1) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	response->config = mcp3911.channel_leds[data->channel].config;
+
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_channel_led_status_config(const SetChannelLEDStatusConfig *data) {
+	if(data->channel > CALLBACK_VALUE_CHANNEL_NUM - 1) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	mcp3911.channel_leds[data->channel].min = data->min;
+	mcp3911.channel_leds[data->channel].max = data->max;
+	mcp3911.channel_leds[data->channel].config_ch_status = data->config;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_channel_led_status_config(const GetChannelLEDStatusConfig *data, GetChannelLEDStatusConfig_Response *response) {
 	response->header.length = sizeof(GetChannelLEDStatusConfig_Response);
+
+	if(data->channel > CALLBACK_VALUE_CHANNEL_NUM - 1) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	response->min = mcp3911.channel_leds[data->channel].min;
+	response->max = mcp3911.channel_leds[data->channel].max;
+	response->config = mcp3911.channel_leds[data->channel].config_ch_status;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
