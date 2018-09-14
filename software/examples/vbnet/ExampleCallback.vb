@@ -24,7 +24,7 @@ Module ExampleCallback
         ' Register voltage callback to subroutine VoltageCB
         AddHandler idai.VoltageCallback, AddressOf VoltageCB
 
-        ' Set period for voltage callback to 1s (1000ms) without a threshold
+        ' Set period for voltage (channel 0) callback to 1s (1000ms) without a threshold
         idai.SetVoltageCallbackConfiguration(0, 1000, False, "x"C, 0, 0)
 
         Console.WriteLine("Press key to exit")
