@@ -20,7 +20,7 @@ func main() {
 
 	idai.RegisterVoltageCallback(func(channel uint8, voltage int32) {
 		fmt.Printf("Channel: %d\n", channel)
-		fmt.Printf("Voltage: %d V\n", float64(voltage)/1000.0)
+		fmt.Printf("Voltage: %f V\n", float64(voltage)/1000.0)
 		fmt.Println()
 	})
 
