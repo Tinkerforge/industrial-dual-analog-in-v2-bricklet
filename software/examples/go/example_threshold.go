@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/tinkerforge/go-api-bindings/industrial_dual_analog_in_v2_bricklet"
-	"github.com/tinkerforge/go-api-bindings/ipconnection"
+	"github.com/Tinkerforge/go-api-bindings/industrial_dual_analog_in_v2_bricklet"
+	"github.com/Tinkerforge/go-api-bindings/ipconnection"
 )
 
 const ADDR string = "localhost:4223"
