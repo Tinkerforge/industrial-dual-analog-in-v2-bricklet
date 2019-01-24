@@ -1,0 +1,10 @@
+
+
+# Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0
+
+setup:
+	# Handle incoming voltage callbacks
+	subscribe to tinkerforge/callback/industrial_dual_analog_in_v2_bricklet/XYZ/voltage
+	publish '{"register": true}' to tinkerforge/register/industrial_dual_analog_in_v2_bricklet/XYZ/voltage # Register voltage callback
+	# Set period for voltage (channel 0) callback to 1s (1000ms) without a threshold
+	publish '{"channel": 0, "period": 1000, "value_has_to_change": false, "option": "off", "min_voltage": 0, "max_voltage": 0}' to tinkerforge/request/industrial_dual_analog_in_v2_bricklet/XYZ/set_voltage_callback_configuration  
