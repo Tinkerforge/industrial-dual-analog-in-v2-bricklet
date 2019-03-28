@@ -7,4 +7,4 @@ setup:
 	
 	# Configure threshold for voltage (channel 0) "greater than 10 V"
 	# with a debounce period of 10s (10000ms)
-	publish '{"channel": 0, "period": 10000, "value_has_to_change": false, "option": "greater", "min": 10000, "max": 0}' to tinkerforge/request/industrial_dual_analog_in_v2_bricklet/XYZ/set_voltage_callback_configuration  
+	publish '{"channel": 0, "period": 10000, "value_has_to_change": false, "option": "greater", "min": 10000, "max": 0}' to tinkerforge/request/industrial_dual_analog_in_v2_bricklet/XYZ/set_voltage_callback_configuration
