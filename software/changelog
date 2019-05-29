@@ -1,2 +1,5 @@
 2018-10-04: 2.0.0 (28b77f5)
 - Initial version
+
+2019-05-29: 2.0.1 (TBD)
+- Fix SPITFP IRQ race condition with other higher prio IRQs (through bricklib2)
