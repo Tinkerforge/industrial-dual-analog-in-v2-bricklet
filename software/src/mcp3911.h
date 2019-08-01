@@ -118,15 +118,6 @@
 #define GET_CTRL_BYTE_R(dev_addr, reg_addr) (((dev_addr) << 6) | ((reg_addr) << 1) | 1)
 #define GET_CTRL_BYTE_W(dev_addr, reg_addr) (((dev_addr) << 6) | ((reg_addr) << 1) | 0)
 
-typedef enum {
-	S_SET_CAL = 0,
-	S_GET_STATUS,
-	S_GET_ADC,
-	S_SET_RATE_R,
-	S_SET_RATE_W,
-	S_SET_RATE_W_DONE
-} MCP3911SM_t;
-
 typedef struct {
 	int32_t cal_gain;
 	int32_t cal_offset;
@@ -148,14 +139,12 @@ typedef struct {
 
 typedef struct {
 	uint8_t rate;
+	bool rate_new;
+	bool calibration_new;
 	uint8_t count;
-	MCP3911SM_t sm;
-	uint16_t config;
-	uint8_t rate_old;
 	uint32_t counter;
 	SPIFifo spi_fifo;
 	uint8_t multiplier;
-	uint8_t spi_fifo_buf[16];
 	MCP3911_CHANNEL_t channels[CALLBACK_VALUE_CHANNEL_NUM];
 	CHANNEL_LED_CONFIG_t channel_leds[CALLBACK_VALUE_CHANNEL_NUM];
 } MCP3911_t;

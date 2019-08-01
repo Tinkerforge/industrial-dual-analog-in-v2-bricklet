@@ -26,9 +26,30 @@
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/hal/ccu4_pwm/ccu4_pwm.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
+#include "bricklib2/os/coop_task.h"
 
 #include "communication.h"
 
+#define MCP3911_DEFAULT_VALUE_STATUS \
+	(MSK_STATUSCOM_MODOUT_CH0_OFF_CH1_OFF | \
+	MSK_STATUSCOM_DR_HIZ_HIGH_IMPEDENCE | \
+	MSK_STATUSCOM_DRMODE_CH0_CH1 | \
+	MSK_STATUSCOM_DRSTATUS_CH0_NRDY_CH1_NRDY | \
+	MSK_STATUSCOM_READ_LOOP_REGISTER_TYPE | \
+	MSK_STATUSCOM_WRITE_LOOP_ENTIRE_REGISTER_SET | \
+	MSK_STATUSCOM_WIDTH_CH0_24_CH1_24 | \
+	MSK_STATUSCOM_EN_OFFCAL_ENA | \
+	MSK_STATUSCOM_EN_GAINCAL_ENA)
+
+#define MCP3911_DEFAULT_VALUE_CONFIG \
+	(MSK_CONFIG_DITHER_MAX | \
+	MSK_CONFIG_AZ_FREQ_LOW | \
+	MSK_CONFIG_RESET_NONE | \
+	MSK_CONFIG_SHUTDOWN_NONE | \
+	MSK_CONFIG_VREFEXT_ENA | \
+	MSK_CONFIG_CLKEXT_XTA)
+
+CoopTask mcp3911_task;
 MCP3911_t mcp3911;
 
 const XMC_GPIO_CONFIG_t channel_led_gpio_config = {
@@ -42,52 +63,8 @@ const XMC_GPIO_CONFIG_t channel_led_pwm_config	= {
 	.output_level     = XMC_GPIO_OUTPUT_LEVEL_LOW,
 };
 
-static void mcp3911_register_rw(uint8_t control_byte, uint8_t *data, uint8_t data_length) {
-	mcp3911.spi_fifo_buf[0] = control_byte;
 
-	for (uint8_t i = 0; i < data_length; i++) {
-		mcp3911.spi_fifo_buf[i + 1] = data[i];
-	}
-
-	XMC_USIC_CH_RXFIFO_Flush(mcp3911.spi_fifo.channel);
-	spi_fifo_transceive(&mcp3911.spi_fifo, data_length + 1, &mcp3911.spi_fifo_buf[0]);
-}
-
-static void mcp3911_calibration_eeprom_read(void) {
-	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
-
-	bootloader_read_eeprom_page(MCP3911_CALIBRATION_PAGE, page);
-
-	/*
-	 * The magic number is not where it is supposed to be.
-	 *
-	 * This is either our first startup or something went wrong.
-	 * We initialize the calibration data with sane default values.
-	 */
-	if(page[0] != MCP3911_CALIBRATION_MAGIC) {
-		for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
-			mcp3911.channels[i].cal_gain = 0;
-			mcp3911.channels[i].cal_offset = 0;
-		}
-
-		mcp3911_calibration_eeprom_write();
-
-		return;
-	}
-
-	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
-		mcp3911.channels[i].cal_gain = page[MCP3911_CALIBRATION_GAIN_POS + i];
-		mcp3911.channels[i].cal_offset = page[MCP3911_CALIBRATION_OFFSET_POS + i];
-	}
-}
-
-void mcp3911_init(void) {
-	logd("[+] mcp3911_init()\n\r");
-
-	uint8_t data[4];
-	uint16_t val_status = 0;
-	uint16_t val_config = 0;
-
+static void mcp3911_init_spi(void) {
 	mcp3911.spi_fifo.channel = MCP3911_USIC_SPI;
 	mcp3911.spi_fifo.baudrate = MCP3911_SPI_BAUDRATE;
 
@@ -118,6 +95,226 @@ void mcp3911_init(void) {
 	mcp3911.spi_fifo.miso_source = MCP3911_MISO_SOURCE;
 
 	spi_fifo_init(&mcp3911.spi_fifo);
+}
+
+static void mcp3911_register_read(const uint8_t reg, uint8_t *data, uint8_t data_length) {
+	uint8_t tmp[16] = {0};
+	tmp[0] = GET_CTRL_BYTE_R(0x00, reg);
+	if(!spi_fifo_coop_transceive(&mcp3911.spi_fifo, data_length + 1, tmp, tmp)) {
+		mcp3911_init_spi();
+	}
+	memcpy(data, &tmp[1], data_length);
+}
+
+static void mcp3911_register_write(const uint8_t reg, const uint8_t *data, uint8_t data_length) {
+	uint8_t tmp[16] = {0};
+	tmp[0] = GET_CTRL_BYTE_W(0x00, reg);
+	memcpy(&tmp[1], data, data_length);
+	if(!spi_fifo_coop_transceive(&mcp3911.spi_fifo, data_length + 1, tmp, tmp)) {
+		mcp3911_init_spi();
+	}
+}
+
+static void mcp3911_calibration_eeprom_read(void) {
+	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
+
+	bootloader_read_eeprom_page(MCP3911_CALIBRATION_PAGE, page);
+
+	/*
+	 * The magic number is not where it is supposed to be.
+	 *
+	 * This is either our first startup or something went wrong.
+	 * We initialize the calibration data with sane default values.
+	 */
+	if(page[0] != MCP3911_CALIBRATION_MAGIC) {
+		for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+			mcp3911.channels[i].cal_gain = 0;
+			mcp3911.channels[i].cal_offset = 0;
+		}
+
+		mcp3911_calibration_eeprom_write();
+
+		return;
+	}
+
+	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+		mcp3911.channels[i].cal_gain = page[MCP3911_CALIBRATION_GAIN_POS + i];
+		mcp3911.channels[i].cal_offset = page[MCP3911_CALIBRATION_OFFSET_POS + i];
+	}
+}
+
+void mcp3911_task_reset(void) {
+	uint8_t config[2] = {
+		(uint8_t)((MCP3911_DEFAULT_VALUE_CONFIG | MSK_CONFIG_RESET_BOTH) >> 8),
+		(uint8_t)(MCP3911_DEFAULT_VALUE_CONFIG | MSK_CONFIG_RESET_BOTH)
+	};
+	mcp3911_register_write(REG_ADDR_CONFIG, config, 2);	
+}
+
+void mcp3911_task_new_data_rate(void) {
+	uint16_t config = MCP3911_DEFAULT_VALUE_CONFIG;
+
+	// TODO: Change DIV2 to DIV1 in next hardware revsion (10MHz MCK vs 4MHz MCK)
+	//       We need to make this dependend on pull-up resistor or similar to
+	//       differentiate between the versions.
+	switch(mcp3911.rate) {
+		case SAMPLE_RATE_976_SPS:
+			config |= MSK_CONFIG_OSR_1024;
+			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+
+			break;
+
+		case SAMPLE_RATE_488_SPS:
+			config |= MSK_CONFIG_OSR_2048;
+			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+
+			break;
+
+		case SAMPLE_RATE_244_SPS:
+		default:
+			config |= MSK_CONFIG_OSR_4096;
+			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+
+			break;
+	}
+
+	switch(mcp3911.rate) {
+		case SAMPLE_RATE_122_SPS:
+			mcp3911.count = 2;
+			mcp3911.multiplier = 122;
+
+			break;
+
+		case SAMPLE_RATE_61_SPS:
+			mcp3911.count = 4;
+			mcp3911.multiplier = 61;
+
+			break;
+
+		case SAMPLE_RATE_4_SPS:
+			mcp3911.count = 61;
+			mcp3911.multiplier = 4;
+
+			break;
+
+		case SAMPLE_RATE_2_SPS:
+			mcp3911.multiplier = 2;
+			mcp3911.count = 122;
+
+			break;
+
+		case SAMPLE_RATE_1_SPS:
+			mcp3911.multiplier = 1;
+			mcp3911.count = 244;
+
+			break;
+
+		default:
+			mcp3911.multiplier = 244;
+			mcp3911.count = 1;
+
+			break;
+	}
+
+	mcp3911.channels[0].sum_adc_raw_value = 0;
+	mcp3911.channels[1].sum_adc_raw_value = 0;
+	mcp3911.counter = 0;
+
+	mcp3911_task_reset();
+	coop_task_sleep_ms(10);
+
+	uint8_t data[2] = {(uint8_t)(config >> 8), (uint8_t)(config)};
+	mcp3911_register_write(REG_ADDR_CONFIG, data, 2);
+
+
+	uint8_t status[2] = {
+		(uint8_t)(MCP3911_DEFAULT_VALUE_STATUS >> 8),
+		(uint8_t)(MCP3911_DEFAULT_VALUE_STATUS)
+	};
+	mcp3911_register_write(REG_ADDR_STATUSCOM, status, 2);
+
+	coop_task_sleep_ms(100);
+}
+
+void mcp3911_task_read_adc(void) {
+	uint8_t data[6] = {0};
+	mcp3911_register_read(REG_ADDR_STATUSCOM, data, 2);
+	uint16_t status = (data[0] << 8) | data[1];
+	if(!(status & (1 << 8)) && !(status & (1 << 9))) {
+		mcp3911_register_read(REG_ADDR_CHANNEL_0, data, 6);
+		
+		// In case of invalid data we re-configure the ADC 
+		// (done through setting new sampling rate)
+		if((data[0] == 0x80) && (data[1] == 0x00) && (data[2] == 0x00) && (data[3] == 0x80) && (data[4] == 0x00) && (data[5] == 0x00)) {
+			mcp3911.rate_new = true;
+			return;
+		}
+
+		mcp3911.counter++;
+		if(mcp3911.counter >= mcp3911.count) {
+			mcp3911.counter = 0;
+		}
+
+		// Get ADC raw value
+		mcp3911.channels[0].adc_raw_value = (data[3] << 16) | (data[4] << 8) | data[5];
+		mcp3911.channels[1].adc_raw_value = (data[0] << 16) | (data[1] << 8) | data[2];
+
+		for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
+			if(mcp3911.channels[i].adc_raw_value & 0x800000) {
+				mcp3911.channels[i].adc_raw_value |= 0xFF000000;
+			}
+
+			// Calculate voltage from ADC raw value
+			mcp3911.channels[i].sum_adc_raw_value += mcp3911.channels[i].adc_raw_value;
+
+			if(mcp3911.counter == 0) {
+				mcp3911.channels[i].adc_voltage = (mcp3911.channels[i].sum_adc_raw_value * mcp3911.multiplier) / 44983;
+				mcp3911.channels[i].sum_adc_raw_value = 0;
+			}
+		}
+	}
+}
+
+void mcp3911_task_tick(void) {
+	coop_task_sleep_ms(10);
+	mcp3911_task_reset();
+	coop_task_sleep_ms(10);
+	mcp3911_set_calibration();
+	coop_task_sleep_ms(10);
+
+	uint8_t config[2] = {
+		(uint8_t)((MCP3911_DEFAULT_VALUE_CONFIG | MSK_CONFIG_AMCLK_MCLK_DIV_2 | MSK_CONFIG_OSR_4096) >> 8),
+		(uint8_t)(MCP3911_DEFAULT_VALUE_CONFIG | MSK_CONFIG_AMCLK_MCLK_DIV_2 | MSK_CONFIG_OSR_4096)
+	};
+	mcp3911_register_write(REG_ADDR_CONFIG, config, 2);
+
+	uint8_t status[2] = {
+		(uint8_t)(MCP3911_DEFAULT_VALUE_STATUS >> 8),
+		(uint8_t)(MCP3911_DEFAULT_VALUE_STATUS)
+	};
+	mcp3911_register_write(REG_ADDR_STATUSCOM, status, 2);
+
+
+	while(true) {
+		if(mcp3911.rate_new) {
+			mcp3911_task_new_data_rate();
+			mcp3911.rate_new = false;
+		}
+
+		if(mcp3911.calibration_new) {
+			mcp3911_set_calibration();
+			mcp3911_calibration_eeprom_write();
+			mcp3911.calibration_new = false;
+		}
+
+		mcp3911_task_read_adc();
+
+		coop_task_yield();
+	}
+}
+
+void mcp3911_init(void) {
+	mcp3911_init_spi();
 
 	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
 		// Init channel values
@@ -144,218 +341,17 @@ void mcp3911_init(void) {
 		ccu4_pwm_set_duty_cycle(i, 0);
 	}
 
-	mcp3911.config = 0;
 	mcp3911.count = 122;
 	mcp3911.counter = 0;
 	mcp3911.multiplier = 2;
 	mcp3911.rate = SAMPLE_RATE_2_SPS;
-	mcp3911.rate_old = SAMPLE_RATE_2_SPS;
-
-	// Set initial status/config
-	val_status = (uint16_t)(MSK_STATUSCOM_MODOUT_CH0_OFF_CH1_OFF |
-	                        MSK_STATUSCOM_DR_HIZ_HIGH_IMPEDENCE |
-	                        MSK_STATUSCOM_DRMODE_CH0_CH1 |
-	                        MSK_STATUSCOM_DRSTATUS_CH0_NRDY_CH1_NRDY |
-	                        MSK_STATUSCOM_READ_LOOP_REGISTER_TYPE |
-	                        MSK_STATUSCOM_WRITE_LOOP_ENTIRE_REGISTER_SET |
-	                        MSK_STATUSCOM_WIDTH_CH0_24_CH1_24 |
-	                        MSK_STATUSCOM_EN_OFFCAL_ENA |
-	                        MSK_STATUSCOM_EN_GAINCAL_ENA);
-
-	val_config = (uint16_t)(MSK_CONFIG_AMCLK_MCLK_DIV_1 |
-	                        MSK_CONFIG_OSR_4096 |
-	                        MSK_CONFIG_DITHER_MAX |
-	                        MSK_CONFIG_AZ_FREQ_LOW |
-	                        MSK_CONFIG_RESET_NONE |
-	                        MSK_CONFIG_SHUTDOWN_NONE |
-	                        MSK_CONFIG_VREFEXT_ENA |
-	                        MSK_CONFIG_CLKEXT_XTA);
-
-	data[0] = (uint8_t)(val_status >> 8);
-	data[1] = (uint8_t)(val_status);
-	data[2] = (uint8_t)(val_config >> 8);
-	data[3] = (uint8_t)(val_config);
-
-	mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_W(0x00, REG_ADDR_STATUSCOM), data, 4);
 
 	mcp3911_calibration_eeprom_read();
 
-	mcp3911.sm = S_SET_CAL;
+	coop_task_init(&mcp3911_task, mcp3911_task_tick);
 }
 
-void mcp3911_tick(void) {
-	uint8_t data[6];
-	uint16_t status = 0;
-
-	SPIFifoState fifo_state = spi_fifo_next_state(&mcp3911.spi_fifo);
-
-	if(fifo_state & SPI_FIFO_STATE_ERROR) {
-		mcp3911_init();
-
-		return;
-	}
-
-	if(fifo_state == SPI_FIFO_STATE_TRANSCEIVE_READY) {
-		switch(mcp3911.sm) {
-			case S_SET_CAL:
-				mcp3911_set_calibration();
-
-				mcp3911.sm = S_GET_STATUS;
-
-				break;
-
-			case S_GET_STATUS:
-				spi_fifo_read_fifo(&mcp3911.spi_fifo, &mcp3911.spi_fifo_buf[0], 3);
-				status = (uint16_t)((mcp3911.spi_fifo_buf[1] << 8) | mcp3911.spi_fifo_buf[2]);
-
-				if(!(status & (1 << 8)) && !(status & (1 << 9))) {
-					mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_R(0x00, REG_ADDR_CHANNEL_0), data, 6);
-
-					mcp3911.sm = S_GET_ADC;
-				}
-				else {
-					mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_R(0x00, REG_ADDR_STATUSCOM), data, 2);
-
-					mcp3911.sm = S_GET_STATUS;
-				}
-
-				break;
-
-			case S_GET_ADC:
-				mcp3911.counter++;
-
-				if(mcp3911.counter >= mcp3911.count) {
-					mcp3911.counter = 0;
-				}
-
-				spi_fifo_read_fifo(&mcp3911.spi_fifo, &mcp3911.spi_fifo_buf[0], 7);
-
-				for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
-					// Get ADC raw value
-					if (i == 0) {
-						mcp3911.channels[i].adc_raw_value = \
-							(mcp3911.spi_fifo_buf[4] << 16) | (mcp3911.spi_fifo_buf[5] << 8) | mcp3911.spi_fifo_buf[6];
-					}
-					else {
-						mcp3911.channels[i].adc_raw_value = \
-							(int32_t)(mcp3911.spi_fifo_buf[1] << 16) | (mcp3911.spi_fifo_buf[2] << 8) | mcp3911.spi_fifo_buf[3];
-					}
-
-					if(mcp3911.channels[i].adc_raw_value & 0x800000) {
-						mcp3911.channels[i].adc_raw_value |= 0xFF000000;
-					}
-
-					// Calculate voltage from ADC raw value
-					mcp3911.channels[i].sum_adc_raw_value += mcp3911.channels[i].adc_raw_value;
-
-					if (mcp3911.counter == 0) {
-						mcp3911.channels[i].adc_voltage = \
-							(mcp3911.channels[i].sum_adc_raw_value * mcp3911.multiplier) / 44983;
-						mcp3911.channels[i].sum_adc_raw_value = 0;
-					}
-				}
-
-				if (mcp3911.rate != mcp3911.rate_old) {
-					mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_R(0x00, REG_ADDR_CONFIG), data, 2);
-
-					mcp3911.sm = S_SET_RATE_R;
-				}
-				else {
-					mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_R(0x00, REG_ADDR_STATUSCOM), data, 2);
-
-					mcp3911.sm = S_GET_STATUS;
-				}
-
-				break;
-
-			case S_SET_RATE_R:
-				spi_fifo_read_fifo(&mcp3911.spi_fifo, &mcp3911.spi_fifo_buf[0], 3);
-
-				mcp3911.config = (uint16_t)(mcp3911.spi_fifo_buf[1] << 8) | mcp3911.spi_fifo_buf[2];
-
-				switch(mcp3911.rate) {
-					case SAMPLE_RATE_976_SPS:
-						mcp3911.config |= MSK_CONFIG_OSR_1024;
-
-						break;
-
-					case SAMPLE_RATE_488_SPS:
-						mcp3911.config |= MSK_CONFIG_OSR_2048;
-
-						break;
-
-					case SAMPLE_RATE_244_SPS:
-					default:
-						mcp3911.config |= MSK_CONFIG_OSR_4096;
-
-						break;
-				}
-
-				mcp3911.sm = S_SET_RATE_W;
-
-				break;
-
-			case S_SET_RATE_W:
-				data[0] = (uint8_t)(mcp3911.config >> 8);
-				data[1] = (uint8_t)(mcp3911.config);
-
-				mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_W(0x00, REG_ADDR_CONFIG), data, 2);
-
-				mcp3911.sm = S_SET_RATE_W_DONE;
-
-				break;
-
-			case S_SET_RATE_W_DONE:
-				switch(mcp3911.rate) {
-					case SAMPLE_RATE_122_SPS:
-						mcp3911.count = 2;
-						mcp3911.multiplier = 122;
-
-						break;
-
-					case SAMPLE_RATE_61_SPS:
-						mcp3911.count = 4;
-						mcp3911.multiplier = 61;
-
-						break;
-
-					case SAMPLE_RATE_4_SPS:
-						mcp3911.count = 61;
-						mcp3911.multiplier = 4;
-
-						break;
-
-					case SAMPLE_RATE_2_SPS:
-						mcp3911.multiplier = 2;
-						mcp3911.count = 122;
-
-						break;
-
-					case SAMPLE_RATE_1_SPS:
-						mcp3911.multiplier = 1;
-						mcp3911.count = 244;
-
-						break;
-
-					default:
-						mcp3911.multiplier = 244;
-						mcp3911.count = 1;
-
-						break;
-				}
-
-				mcp3911.rate_old = mcp3911.rate;
-
-				mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_R(0x00, REG_ADDR_STATUSCOM), data, 2);
-
-				mcp3911.sm = S_GET_STATUS;
-
-			default:
-				break;
-		}
-	}
-
-	// Manage channel LEDs
+void mcp3911_handle_leds(void) {
 	for(uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
 		if (mcp3911.channel_leds[i].config_old != mcp3911.channel_leds[i].config) {
 			// Other -> Show Channel Status
@@ -454,6 +450,11 @@ void mcp3911_tick(void) {
 	}
 }
 
+void mcp3911_tick(void) {
+	coop_task_tick(&mcp3911_task);
+	mcp3911_handle_leds();
+}
+
 void mcp3911_set_calibration(void) {
 	uint8_t cal_data[12];
 	int32_t cal_offset_tmp = 0;
@@ -474,7 +475,7 @@ void mcp3911_set_calibration(void) {
 	}
 
 	// Write offset and gain for both channels
-	mcp3911_register_rw((uint8_t)GET_CTRL_BYTE_W(0x00, REG_ADDR_OFFCAL_CH0), cal_data, 12);
+	mcp3911_register_write(REG_ADDR_OFFCAL_CH0, cal_data, 12);
 }
 
 void mcp3911_calibration_eeprom_write(void) {

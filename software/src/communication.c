@@ -53,7 +53,8 @@ BootloaderHandleMessageResponse set_sample_rate(const SetSampleRate *data) {
 		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
 	}
 
-	mcp3911.rate = data->rate;
+	mcp3911.rate     = data->rate;
+	mcp3911.rate_new = true;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
@@ -71,8 +72,7 @@ BootloaderHandleMessageResponse set_calibration(const SetCalibration *data) {
 		mcp3911.channels[i].cal_offset = data->offset[i];
 	}
 
-	mcp3911_set_calibration();
-	mcp3911_calibration_eeprom_write();
+	mcp3911.calibration_new = true;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }

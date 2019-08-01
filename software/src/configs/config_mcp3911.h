@@ -25,7 +25,7 @@
 #include "xmc_gpio.h"
 #include "xmc_spi.h"
 
-#define MCP3911_SPI_BAUDRATE           100000
+#define MCP3911_SPI_BAUDRATE           200000
 #define MCP3911_USIC_CHANNEL           USIC0_CH0
 #define MCP3911_USIC_SPI               XMC_SPI0_CH0
 
