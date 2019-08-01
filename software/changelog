@@ -4,7 +4,7 @@
 2019-05-29: 2.0.1 (4e98740)
 - Fix SPITFP IRQ race condition with other higher prio IRQs (through bricklib2)
 
-2019-08-01: 2.0.2 (TBD)
+2019-08-01: 2.0.2 (2392f0e)
 - Fix error in sample rate configuration
 - Use coop task instead of complicated state machine
 - Properly reconfigure ADC in case of invalid data
