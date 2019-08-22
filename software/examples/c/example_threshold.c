@@ -35,7 +35,7 @@ int main(void) {
 	// Register voltage callback to function cb_voltage
 	industrial_dual_analog_in_v2_register_callback(&idai,
 	                                               INDUSTRIAL_DUAL_ANALOG_IN_V2_CALLBACK_VOLTAGE,
-	                                               (void *)cb_voltage,
+	                                               (void (*)(void))cb_voltage,
 	                                               NULL);
 
 	// Configure threshold for voltage (channel 0) "greater than 10 V"

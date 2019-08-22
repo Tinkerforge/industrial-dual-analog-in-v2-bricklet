@@ -35,7 +35,7 @@ int main(void) {
 	// Register voltage callback to function cb_voltage
 	industrial_dual_analog_in_v2_register_callback(&idai,
 	                                               INDUSTRIAL_DUAL_ANALOG_IN_V2_CALLBACK_VOLTAGE,
-	                                               (void *)cb_voltage,
+	                                               (void (*)(void))cb_voltage,
 	                                               NULL);
 
 	// Set period for voltage (channel 0) callback to 1s (1000ms) without a threshold
