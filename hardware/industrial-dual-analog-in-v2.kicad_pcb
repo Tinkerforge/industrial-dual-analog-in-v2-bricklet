@@ -71,6 +71,7 @@
     (pad_size 0.45 1.75)
     (pad_drill 0)
     (pad_to_mask_clearance 0)
+    (solder_mask_min_width 0.25)
     (aux_axis_origin 115.6 80)
     (grid_origin 115.6 80)
     (visible_elements FFFFEF3F)
@@ -7593,7 +7594,7 @@
   )
 
   (module kicad-libraries:CE_5mm (layer B.Cu) (tedit 5922FFD4) (tstamp 5AA8047F)
-    (at 125.6 102 90)
+    (at 125.6 100 90)
     (fp_text reference VAL (at 0 0 90) (layer B.SilkS) hide
       (effects (font (size 0.2 0.2) (thickness 0.05)) (justify mirror))
     )
@@ -7811,7 +7812,7 @@
   )
 
   (module kicad-libraries:Logo_CoMCU (layer B.Cu) (tedit 0) (tstamp 5AA86E8B)
-    (at 145.6 102 90)
+    (at 145.6 100 90)
     (fp_text reference G*** (at 0 0 90) (layer B.SilkS) hide
       (effects (font (size 1.524 1.524) (thickness 0.3)) (justify mirror))
     )
