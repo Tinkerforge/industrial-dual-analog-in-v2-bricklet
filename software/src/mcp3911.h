@@ -147,6 +147,8 @@ typedef struct {
 	uint8_t multiplier;
 	MCP3911_CHANNEL_t channels[CALLBACK_VALUE_CHANNEL_NUM];
 	CHANNEL_LED_CONFIG_t channel_leds[CALLBACK_VALUE_CHANNEL_NUM];
+
+	bool is_version_2_1;
 } MCP3911_t;
 
 extern MCP3911_t mcp3911;

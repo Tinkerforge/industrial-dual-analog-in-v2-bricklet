@@ -246,11 +246,20 @@ void mcp3911_task_read_adc(void) {
 }
 
 void mcp3911_task_tick(void) {
+	const XMC_GPIO_CONFIG_t version_config = {
+		.mode         = XMC_GPIO_MODE_INPUT_PULL_UP,
+		.output_level = XMC_GPIO_OUTPUT_LEVEL_HIGH,
+	};
+
+	XMC_GPIO_Init(MCP3911_VERSION_PORT, MCP3911_VERSION_PIN, &version_config);
+
 	coop_task_sleep_ms(10);
 	mcp3911_task_reset();
 	coop_task_sleep_ms(10);
 	mcp3911_set_calibration();
 	coop_task_sleep_ms(10);
+
+	mcp3911.is_version_2_1 = !XMC_GPIO_GetInput(MCP3911_VERSION_PORT, MCP3911_VERSION_PIN);
 
 	uint8_t config[2] = {
 		(uint8_t)((MCP3911_DEFAULT_VALUE_CONFIG | MSK_CONFIG_AMCLK_MCLK_DIV_2 | MSK_CONFIG_OSR_4096) >> 8),
