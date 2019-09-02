@@ -324,6 +324,7 @@ void mcp3911_init(void) {
 	mcp3911.counter = 0;
 	mcp3911.multiplier = 2;
 	mcp3911.rate = SAMPLE_RATE_2_SPS;
+	mcp3911.rate_new = true;
 
 	mcp3911_calibration_eeprom_read();
 
