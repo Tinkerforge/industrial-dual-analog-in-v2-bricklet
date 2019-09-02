@@ -158,26 +158,25 @@ void mcp3911_task_reset(void) {
 void mcp3911_task_new_data_rate(void) {
 	uint16_t config = MCP3911_DEFAULT_VALUE_CONFIG;
 
-	// TODO: Change DIV2 to DIV1 in next hardware revsion (10MHz MCK vs 4MHz MCK)
-	//       We need to make this dependend on pull-up resistor or similar to
-	//       differentiate between the versions.
+	const uint32_t mclk_div = mcp3911.is_version_2_1 ? MSK_CONFIG_AMCLK_MCLK_DIV_1 : MSK_CONFIG_AMCLK_MCLK_DIV_2;
+
 	switch(mcp3911.rate) {
 		case SAMPLE_RATE_976_SPS:
 			config |= MSK_CONFIG_OSR_1024;
-			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+			config |= mclk_div;
 
 			break;
 
 		case SAMPLE_RATE_488_SPS:
 			config |= MSK_CONFIG_OSR_2048;
-			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+			config |= mclk_div;
 
 			break;
 
 		case SAMPLE_RATE_244_SPS:
 		default:
 			config |= MSK_CONFIG_OSR_4096;
-			config |= MSK_CONFIG_AMCLK_MCLK_DIV_2;
+			config |= mclk_div;
 
 			break;
 	}
