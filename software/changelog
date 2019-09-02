@@ -8,3 +8,7 @@
 - Fix error in sample rate configuration
 - Use coop task instead of complicated state machine
 - Properly reconfigure ADC in case of invalid data
+
+2019-09-02: 2.0.3 (TBD)
+- Always set sample rate on start-up
+- Use different MCLK divisor depending on external oscillator (HW 2.0 vs 2.1)
