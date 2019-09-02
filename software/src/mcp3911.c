@@ -23,6 +23,7 @@
 
 #include "configs/config_mcp3911.h"
 
+#include "bricklib2/utility/util_definitions.h"
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/hal/ccu4_pwm/ccu4_pwm.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
@@ -51,6 +52,9 @@
 
 CoopTask mcp3911_task;
 MCP3911_t mcp3911;
+
+const uint8_t counts[] = {1, 1, 1, 2, 4, 61, 122, 244};
+const uint8_t multipliers[] = {244, 244, 244, 122, 61, 4, 2, 1};
 
 const XMC_GPIO_CONFIG_t channel_led_gpio_config = {
 	.mode         = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
@@ -178,43 +182,9 @@ void mcp3911_task_new_data_rate(void) {
 			break;
 	}
 
-	switch(mcp3911.rate) {
-		case SAMPLE_RATE_122_SPS:
-			mcp3911.count = 2;
-			mcp3911.multiplier = 122;
-
-			break;
-
-		case SAMPLE_RATE_61_SPS:
-			mcp3911.count = 4;
-			mcp3911.multiplier = 61;
-
-			break;
-
-		case SAMPLE_RATE_4_SPS:
-			mcp3911.count = 61;
-			mcp3911.multiplier = 4;
-
-			break;
-
-		case SAMPLE_RATE_2_SPS:
-			mcp3911.multiplier = 2;
-			mcp3911.count = 122;
-
-			break;
-
-		case SAMPLE_RATE_1_SPS:
-			mcp3911.multiplier = 1;
-			mcp3911.count = 244;
-
-			break;
-
-		default:
-			mcp3911.multiplier = 244;
-			mcp3911.count = 1;
-
-			break;
-	}
+	mcp3911.rate       = MIN(SAMPLE_RATE_1_SPS, mcp3911.rate);
+	mcp3911.count      = counts[mcp3911.rate];
+	mcp3911.multiplier = counts[mcp3911.rate];
 
 	mcp3911.channels[0].sum_adc_raw_value = 0;
 	mcp3911.channels[1].sum_adc_raw_value = 0;
