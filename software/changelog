@@ -13,6 +13,6 @@
 - Always set sample rate on start-up
 - Use different MCLK divisor depending on external oscillator (HW 2.0 vs 2.1)
 
-2019-09-03: 2.0.4 (TBD)
+2019-09-03: 2.0.4 (2df1e88)
 - Fix copy+paste error introduced in 2.0.3
 - Fix potential race condition for configuration and calibration
