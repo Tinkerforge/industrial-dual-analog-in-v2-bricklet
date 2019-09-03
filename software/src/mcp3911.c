@@ -275,14 +275,14 @@ void mcp3911_task_tick(void) {
 
 	while(true) {
 		if(mcp3911.rate_new) {
-			mcp3911_task_new_data_rate();
 			mcp3911.rate_new = false;
+			mcp3911_task_new_data_rate();
 		}
 
 		if(mcp3911.calibration_new) {
+			mcp3911.calibration_new = false;
 			mcp3911_set_calibration();
 			mcp3911_calibration_eeprom_write();
-			mcp3911.calibration_new = false;
 		}
 
 		mcp3911_task_read_adc();
