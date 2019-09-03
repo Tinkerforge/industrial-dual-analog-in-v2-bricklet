@@ -183,7 +183,7 @@ void mcp3911_task_new_data_rate(void) {
 
 	mcp3911.rate       = MIN(SAMPLE_RATE_1_SPS, mcp3911.rate);
 	mcp3911.count      = counts[mcp3911.rate];
-	mcp3911.multiplier = counts[mcp3911.rate];
+	mcp3911.multiplier = multipliers[mcp3911.rate];
 
 	mcp3911.channels[0].sum_adc_raw_value = 0;
 	mcp3911.channels[1].sum_adc_raw_value = 0;
