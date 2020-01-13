@@ -19,5 +19,5 @@ if __name__ == "__main__":
     voltage = idai.get_voltage(0)
     print("Voltage (Channel 0): " + str(voltage/1000.0) + " V")
 
-    raw_input("Press key to exit\n") # Use input() in Python 3
+    input("Press key to exit\n") # Use raw_input() in Python 2
     ipcon.disconnect()

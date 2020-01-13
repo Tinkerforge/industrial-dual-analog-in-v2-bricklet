@@ -28,5 +28,5 @@ if __name__ == "__main__":
     # with a debounce period of 10s (10000ms)
     idai.set_voltage_callback_configuration(0, 10000, False, ">", 10*1000, 0)
 
-    raw_input("Press key to exit\n") # Use input() in Python 3
+    input("Press key to exit\n") # Use raw_input() in Python 2
     ipcon.disconnect()
