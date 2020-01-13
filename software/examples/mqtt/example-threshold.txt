@@ -4,7 +4,7 @@ setup:
 	# Handle incoming voltage callbacks
 	subscribe to tinkerforge/callback/industrial_dual_analog_in_v2_bricklet/XYZ/voltage
 	publish '{"register": true}' to tinkerforge/register/industrial_dual_analog_in_v2_bricklet/XYZ/voltage # Register voltage callback
-	
+
 	# Configure threshold for voltage (channel 0) "greater than 10 V"
 	# with a debounce period of 10s (10000ms)
 	publish '{"channel": 0, "period": 10000, "value_has_to_change": false, "option": "greater", "min": 10000, "max": 0}' to tinkerforge/request/industrial_dual_analog_in_v2_bricklet/XYZ/set_voltage_callback_configuration
