@@ -182,7 +182,7 @@ bool handle_voltage_callback_0(void);
 bool handle_voltage_callback_1(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 1
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 2
 #define COMMUNICATION_CALLBACK_LIST_INIT \
 	handle_voltage_callback_0, \
 	handle_voltage_callback_1, \
