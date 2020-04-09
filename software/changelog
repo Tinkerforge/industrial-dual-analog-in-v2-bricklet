@@ -16,3 +16,6 @@
 2019-09-03: 2.0.4 (2df1e88)
 - Fix copy+paste error introduced in 2.0.3
 - Fix potential race condition for configuration and calibration
+
+2020-04-09: 2.0.5 (<unknown>)
+- Fix callback generation limit of 500 voltage callbacks per second per channel
