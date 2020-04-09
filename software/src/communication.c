@@ -146,14 +146,12 @@ BootloaderHandleMessageResponse get_channel_led_status_config(const GetChannelLE
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
-bool handle_voltage_callback(void) {
-	bool ret = handle_callback_value_callback_int32_t(callback_values_voltage, voltage_callback_channel, FID_CALLBACK_VOLTAGE);
+bool handle_voltage_callback_0(void) {
+	return handle_callback_value_callback_int32_t(callback_values_voltage, 0, FID_CALLBACK_VOLTAGE);
+}
 
-	if(++voltage_callback_channel >= CALLBACK_VALUE_CHANNEL_NUM) {
-		voltage_callback_channel = 0;
-	}
-
-	return ret;
+bool handle_voltage_callback_1(void) {
+	return handle_callback_value_callback_int32_t(callback_values_voltage, 1, FID_CALLBACK_VOLTAGE);
 }
 
 void communication_tick(void) {
