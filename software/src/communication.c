@@ -30,6 +30,9 @@
 uint8_t voltage_callback_channel = 0;
 CallbackValue_int32_t callback_values_voltage[CALLBACK_VALUE_CHANNEL_NUM];
 
+static uint32_t all_voltages_callback_period = 0;
+static bool all_voltages_callback_value_has_to_change = false;
+
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
 		case FID_GET_VOLTAGE: return get_callback_value_int32_t(message, response, callback_values_voltage);
@@ -44,6 +47,9 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_CHANNEL_LED_CONFIG: return get_channel_led_config(message, response);
 		case FID_SET_CHANNEL_LED_STATUS_CONFIG: return set_channel_led_status_config(message);
 		case FID_GET_CHANNEL_LED_STATUS_CONFIG: return get_channel_led_status_config(message, response);
+		case FID_GET_ALL_VOLTAGES: return get_all_voltages(message, response);
+		case FID_SET_ALL_VOLTAGES_CALLBACK_CONFIGURATION: return set_all_voltages_callback_configuration(message);
+		case FID_GET_ALL_VOLTAGES_CALLBACK_CONFIGURATION: return get_all_voltages_callback_configuration(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -146,12 +152,72 @@ BootloaderHandleMessageResponse get_channel_led_status_config(const GetChannelLE
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse get_all_voltages(const GetAllVoltages *data, GetAllVoltages_Response *response) {
+	response->header.length = sizeof(GetAllVoltages_Response);
+
+	response->voltages[0] = mcp3911_get_voltage(0);
+	response->voltages[1] = mcp3911_get_voltage(1);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_all_voltages_callback_configuration(const SetAllVoltagesCallbackConfiguration *data) {
+	all_voltages_callback_period = data->period;
+	all_voltages_callback_value_has_to_change = data->value_has_to_change;
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_all_voltages_callback_configuration(const GetAllVoltagesCallbackConfiguration *data, GetAllVoltagesCallbackConfiguration_Response *response) {
+	response->header.length = sizeof(GetAllVoltagesCallbackConfiguration_Response);
+
+	response->period = all_voltages_callback_period;
+	response->value_has_to_change = all_voltages_callback_value_has_to_change;
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
 bool handle_voltage_callback_0(void) {
 	return handle_callback_value_callback_int32_t(callback_values_voltage, 0, FID_CALLBACK_VOLTAGE);
 }
 
 bool handle_voltage_callback_1(void) {
 	return handle_callback_value_callback_int32_t(callback_values_voltage, 1, FID_CALLBACK_VOLTAGE);
+}
+
+bool handle_all_voltages_callback(void) {
+	static bool is_buffered = false;
+	static AllVoltages_Callback cb;
+	static uint32_t last_time;
+	static uint32_t last_voltages[2] = {0, 0};
+
+	if(!is_buffered) {
+		if((all_voltages_callback_period == 0) ||
+		   (!system_timer_is_time_elapsed_ms(last_time, all_voltages_callback_period))) {
+			return false;
+		}
+
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(AllVoltages_Callback), FID_CALLBACK_ALL_VOLTAGES);
+
+		cb.voltages[0] = mcp3911_get_voltage(0);
+		cb.voltages[1] = mcp3911_get_voltage(1);
+
+		if (cb.voltages[0] == last_voltages[0] && cb.voltages[1] == last_voltages[1]) {
+			return false;
+		}
+
+		last_voltages[0] = cb.voltages[0];
+		last_voltages[1] = cb.voltages[1];
+		last_time = system_timer_get_ms();
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(AllVoltages_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
 }
 
 void communication_tick(void) {

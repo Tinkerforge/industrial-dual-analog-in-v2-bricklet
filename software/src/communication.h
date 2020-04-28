@@ -88,8 +88,12 @@ void communication_init(void);
 #define FID_GET_CHANNEL_LED_CONFIG 11
 #define FID_SET_CHANNEL_LED_STATUS_CONFIG 12
 #define FID_GET_CHANNEL_LED_STATUS_CONFIG 13
+#define FID_GET_ALL_VOLTAGES 14
+#define FID_SET_ALL_VOLTAGES_CALLBACK_CONFIGURATION 15
+#define FID_GET_ALL_VOLTAGES_CALLBACK_CONFIGURATION 16
 
 #define FID_CALLBACK_VOLTAGE 4
+#define FID_CALLBACK_ALL_VOLTAGES 17
 
 typedef struct {
 	TFPMessageHeader header;
@@ -166,6 +170,37 @@ typedef struct {
 	uint8_t config;
 } __attribute__((__packed__)) GetChannelLEDStatusConfig_Response;
 
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetAllVoltages;
+
+typedef struct {
+	TFPMessageHeader header;
+	int32_t voltages[2];
+} __attribute__((__packed__)) GetAllVoltages_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t period;
+	bool value_has_to_change;
+} __attribute__((__packed__)) SetAllVoltagesCallbackConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetAllVoltagesCallbackConfiguration;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t period;
+	bool value_has_to_change;
+} __attribute__((__packed__)) GetAllVoltagesCallbackConfiguration_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	int32_t voltages[2];
+} __attribute__((__packed__)) AllVoltages_Callback;
+
 // Function prototypes
 BootloaderHandleMessageResponse set_sample_rate(const SetSampleRate *data);
 BootloaderHandleMessageResponse get_sample_rate(const GetSampleRate *data, GetSampleRate_Response *response);
@@ -176,15 +211,20 @@ BootloaderHandleMessageResponse set_channel_led_config(const SetChannelLEDConfig
 BootloaderHandleMessageResponse get_channel_led_config(const GetChannelLEDConfig *data, GetChannelLEDConfig_Response *response);
 BootloaderHandleMessageResponse set_channel_led_status_config(const SetChannelLEDStatusConfig *data);
 BootloaderHandleMessageResponse get_channel_led_status_config(const GetChannelLEDStatusConfig *data, GetChannelLEDStatusConfig_Response *response);
+BootloaderHandleMessageResponse get_all_voltages(const GetAllVoltages *data, GetAllVoltages_Response *response);
+BootloaderHandleMessageResponse set_all_voltages_callback_configuration(const SetAllVoltagesCallbackConfiguration *data);
+BootloaderHandleMessageResponse get_all_voltages_callback_configuration(const GetAllVoltagesCallbackConfiguration *data, GetAllVoltagesCallbackConfiguration_Response *response);
 
 // Callbacks
 bool handle_voltage_callback_0(void);
 bool handle_voltage_callback_1(void);
+bool handle_all_voltages_callback(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 2
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 3
 #define COMMUNICATION_CALLBACK_LIST_INIT \
 	handle_voltage_callback_0, \
 	handle_voltage_callback_1, \
+	handle_all_voltages_callback, \
 
 #endif
