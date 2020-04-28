@@ -37,6 +37,9 @@
 #define CALLBACK_VALUE_CHANNEL_NUM 2
 
 #define SPI_FIFO_COOP_ENABLE
+#define SPI_FIFO_BAUDRATE_FDR 0x83C0
+#define SPI_FIFO_BAUDRATE_BRG 0x4A0400
+#define SPI_FIFO_CHANNEL XMC_SPI0_CH0
 
 #include "config_custom_bootloader.h"
 

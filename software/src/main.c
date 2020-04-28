@@ -32,8 +32,8 @@
 #include "mcp3911.h"
 
 int main(void) {
-	logging_init();
-	logd("Start Industrial Dual Analog In V2 Bricklet\n\r");
+//	logging_init();
+//	logd("Start Industrial Dual Analog In V2 Bricklet\n\r");
 
 	communication_init();
 	mcp3911_init();

@@ -292,19 +292,14 @@ void mcp3911_task_tick(void) {
 }
 
 void mcp3911_init(void) {
+	memset(&mcp3911, 0, sizeof(MCP3911_t));
 	mcp3911_init_spi();
 
 	for (uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
-		// Init channel values
-		mcp3911.channels[i].adc_voltage = 0;
-		mcp3911.channels[i].adc_raw_value = 0;
-		mcp3911.channels[i].sum_adc_raw_value = 0;
-
 		// Init channel LEDs
 		mcp3911.channel_leds[i].pin = i;
 		mcp3911.channel_leds[i].port = (XMC_GPIO_PORT_t *)PORT1_BASE;
 
-		mcp3911.channel_leds[i].channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
 		mcp3911.channel_leds[i].config = INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS;
 		mcp3911.channel_leds[i].config_old = INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS;
 
@@ -320,7 +315,6 @@ void mcp3911_init(void) {
 	}
 
 	mcp3911.count = 122;
-	mcp3911.counter = 0;
 	mcp3911.multiplier = 2;
 	mcp3911.rate = SAMPLE_RATE_2_SPS;
 	mcp3911.rate_new = true;
@@ -328,6 +322,35 @@ void mcp3911_init(void) {
 	mcp3911_calibration_eeprom_read();
 
 	coop_task_init(&mcp3911_task, mcp3911_task_tick);
+}
+
+void mcp3911_led_heartbeat_tick(LEDFlickerState *led_flicker_state, XMC_GPIO_PORT_t *const port, const uint8_t pin) {
+	const uint32_t current_time = system_timer_get_ms();
+	if(led_flicker_state->counter > 2) {
+		if((current_time - led_flicker_state->start) >= LED_FLICKER_HEARTBEAT_DURATION) {
+			XMC_GPIO_SetOutputLow(port, pin);
+			led_flicker_state->start = current_time;
+			led_flicker_state->counter = 0;
+		}
+	} else {
+		if(led_flicker_state->counter == 0 || led_flicker_state->counter == 2) {
+			if((current_time - led_flicker_state->start) >= LED_FLICKER_HEARTBEAT_ONTIME) {
+				XMC_GPIO_SetOutputHigh(port, pin);
+				led_flicker_state->start = current_time;
+				if(led_flicker_state->counter == 0) {
+					led_flicker_state->counter = 1;
+				} else {
+					led_flicker_state->counter = 3;
+				}
+			}
+		} else {
+			if((current_time - led_flicker_state->start) >= LED_FLICKER_HEARTBEAT_OFFTIME) {
+				XMC_GPIO_SetOutputLow(port, pin);
+				led_flicker_state->start = current_time;
+				led_flicker_state->counter = 2;
+			}
+		}
+	}
 }
 
 void mcp3911_handle_leds(void) {
@@ -348,30 +371,18 @@ void mcp3911_handle_leds(void) {
 
 		switch (mcp3911.channel_leds[i].config) {
 			case INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_OFF:
-				mcp3911.channel_leds[i].channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
 				XMC_GPIO_SetOutputHigh(mcp3911.channel_leds[i].port, mcp3911.channel_leds[i].pin);
-
 				break;
 
 			case INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_ON:
-				mcp3911.channel_leds[i].channel_led_flicker_state.config = LED_FLICKER_CONFIG_ON;
 				XMC_GPIO_SetOutputLow(mcp3911.channel_leds[i].port, mcp3911.channel_leds[i].pin);
-
 				break;
 
 			case INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_SHOW_HEARTBEAT:
-				mcp3911.channel_leds[i].channel_led_flicker_state.config = LED_FLICKER_CONFIG_HEARTBEAT;
-
-				led_flicker_tick(&mcp3911.channel_leds[i].channel_led_flicker_state,
-								 system_timer_get_ms(),
-								 mcp3911.channel_leds[i].port,
-								 mcp3911.channel_leds[i].pin);
-
+				mcp3911_led_heartbeat_tick(&mcp3911.channel_leds[i].channel_led_flicker_state, mcp3911.channel_leds[i].port, mcp3911.channel_leds[i].pin);
 				break;
 
 			case INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_CONFIG_SHOW_CHANNEL_STATUS:
-				mcp3911.channel_leds[i].channel_led_flicker_state.config = LED_FLICKER_CONFIG_OFF;
-
 				if (mcp3911.channel_leds[i].config_ch_status == INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_STATUS_CONFIG_THRESHOLD) {
 					if ((mcp3911.channel_leds[i].min == 0) && (mcp3911.channel_leds[i].max != 0)) {
 						if (mcp3911.channels[i].adc_voltage < mcp3911.channel_leds[i].max) {
