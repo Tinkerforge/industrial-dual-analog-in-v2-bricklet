@@ -132,9 +132,9 @@ typedef struct {
 	uint8_t pin;
 	uint8_t config;
 	uint8_t config_old;
-	XMC_GPIO_PORT_t *port;
 	uint8_t config_ch_status;
 	LEDFlickerState channel_led_flicker_state;
+	XMC_GPIO_PORT_t *port;
 } CHANNEL_LED_CONFIG_t;
 
 typedef struct {
@@ -142,13 +142,12 @@ typedef struct {
 	bool rate_new;
 	bool calibration_new;
 	uint8_t count;
+	uint8_t multiplier;
+	bool is_version_2_1;
 	uint32_t counter;
 	SPIFifo spi_fifo;
-	uint8_t multiplier;
 	MCP3911_CHANNEL_t channels[CALLBACK_VALUE_CHANNEL_NUM];
 	CHANNEL_LED_CONFIG_t channel_leds[CALLBACK_VALUE_CHANNEL_NUM];
-
-	bool is_version_2_1;
 } MCP3911_t;
 
 extern MCP3911_t mcp3911;
