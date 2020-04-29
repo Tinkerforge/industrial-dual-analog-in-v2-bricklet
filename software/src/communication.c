@@ -27,11 +27,10 @@
 
 #include "mcp3911.h"
 
-uint8_t voltage_callback_channel = 0;
 CallbackValue_int32_t callback_values_voltage[CALLBACK_VALUE_CHANNEL_NUM];
 
+// all_voltages_callback_value_has_to_change is in the mcp3911 struct for code size reasons.
 static uint32_t all_voltages_callback_period = 0;
-static bool all_voltages_callback_value_has_to_change = false;
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -163,7 +162,7 @@ BootloaderHandleMessageResponse get_all_voltages(const GetAllVoltages *data, Get
 
 BootloaderHandleMessageResponse set_all_voltages_callback_configuration(const SetAllVoltagesCallbackConfiguration *data) {
 	all_voltages_callback_period = data->period;
-	all_voltages_callback_value_has_to_change = data->value_has_to_change;
+	mcp3911.all_voltages_callback_value_has_to_change = data->value_has_to_change;
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
@@ -171,7 +170,7 @@ BootloaderHandleMessageResponse get_all_voltages_callback_configuration(const Ge
 	response->header.length = sizeof(GetAllVoltagesCallbackConfiguration_Response);
 
 	response->period = all_voltages_callback_period;
-	response->value_has_to_change = all_voltages_callback_value_has_to_change;
+	response->value_has_to_change = mcp3911.all_voltages_callback_value_has_to_change;
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 

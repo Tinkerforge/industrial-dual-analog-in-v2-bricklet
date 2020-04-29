@@ -337,23 +337,20 @@ void mcp3911_led_heartbeat_tick(LEDFlickerState *led_flicker_state, XMC_GPIO_POR
 			if((current_time - led_flicker_state->start) >= LED_FLICKER_HEARTBEAT_ONTIME) {
 				XMC_GPIO_SetOutputHigh(port, pin);
 				led_flicker_state->start = current_time;
-				if(led_flicker_state->counter == 0) {
-					led_flicker_state->counter = 1;
-				} else {
-					led_flicker_state->counter = 3;
-				}
+				led_flicker_state->counter += 1;
 			}
 		} else {
 			if((current_time - led_flicker_state->start) >= LED_FLICKER_HEARTBEAT_OFFTIME) {
 				XMC_GPIO_SetOutputLow(port, pin);
 				led_flicker_state->start = current_time;
-				led_flicker_state->counter = 2;
+				led_flicker_state->counter += 1;
 			}
 		}
 	}
 }
 
 void mcp3911_handle_leds(void) {
+	uint16_t duty_cycle;
 	for(uint8_t i = 0; i < CALLBACK_VALUE_CHANNEL_NUM; i++) {
 		if (mcp3911.channel_leds[i].config_old != mcp3911.channel_leds[i].config) {
 			// Other -> Show Channel Status
@@ -386,49 +383,51 @@ void mcp3911_handle_leds(void) {
 				if (mcp3911.channel_leds[i].config_ch_status == INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_STATUS_CONFIG_THRESHOLD) {
 					if ((mcp3911.channel_leds[i].min == 0) && (mcp3911.channel_leds[i].max != 0)) {
 						if (mcp3911.channels[i].adc_voltage < mcp3911.channel_leds[i].max) {
-							ccu4_pwm_set_duty_cycle(i, 100);
+							duty_cycle = 100;
 						}
 						else {
-							ccu4_pwm_set_duty_cycle(i, 0);
+							duty_cycle = 0;
 						}
 					}
 					else {
 						if (mcp3911.channels[i].adc_voltage > mcp3911.channel_leds[i].min) {
-							ccu4_pwm_set_duty_cycle(i, 100);
+							duty_cycle = 100;
 						}
 						else {
-							ccu4_pwm_set_duty_cycle(i, 0);
+							duty_cycle = 0;
 						}
 					}
+					ccu4_pwm_set_duty_cycle(i, duty_cycle);
 				}
 				else if (mcp3911.channel_leds[i].config_ch_status == INDUSTRIAL_DUAL_ANALOG_IN_V2_CHANNEL_LED_STATUS_CONFIG_INTENSITY) {
 					if (mcp3911.channel_leds[i].min > mcp3911.channel_leds[i].max) {
 						if (mcp3911.channels[i].adc_voltage > mcp3911.channel_leds[i].min) {
-							ccu4_pwm_set_duty_cycle(i, 0);
+							duty_cycle = 0;
 						}
 						else if (mcp3911.channels[i].adc_voltage < mcp3911.channel_leds[i].max) {
-							ccu4_pwm_set_duty_cycle(i, 100);
+							duty_cycle = 100;
 						}
 						else {
 							int32_t range = mcp3911.channel_leds[i].min - mcp3911.channel_leds[i].max;
 							int32_t scaled_channel_voltage = mcp3911.channels[i].adc_voltage - mcp3911.channel_leds[i].max;
 							int32_t pwm_dc = (scaled_channel_voltage * 100) / range;
-							ccu4_pwm_set_duty_cycle(i, (uint16_t)(100 - pwm_dc));
+							duty_cycle = (uint16_t)(100 - pwm_dc);
 						}
 					}
 					else {
 						if (mcp3911.channels[i].adc_voltage > mcp3911.channel_leds[i].max) {
-							ccu4_pwm_set_duty_cycle(i, 100);
+							duty_cycle = 100;
 						}
 						else if (mcp3911.channels[i].adc_voltage < mcp3911.channel_leds[i].min) {
-							ccu4_pwm_set_duty_cycle(i, 0);
+							duty_cycle = 0;
 						}
 						else {
 							int32_t range = mcp3911.channel_leds[i].max - mcp3911.channel_leds[i].min;
 							int32_t scaled_channel_voltage = mcp3911.channels[i].adc_voltage  - mcp3911.channel_leds[i].min;
 							int32_t pwm_dc = (scaled_channel_voltage * 100) / range;
-							ccu4_pwm_set_duty_cycle(i, (uint16_t)pwm_dc);
+							duty_cycle = (uint16_t)(pwm_dc);
 						}
+						ccu4_pwm_set_duty_cycle(i, duty_cycle);
 					}
 				}
 

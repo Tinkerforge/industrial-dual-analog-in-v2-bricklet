@@ -141,9 +141,12 @@ typedef struct {
 	uint8_t rate;
 	bool rate_new;
 	bool calibration_new;
+	bool all_voltages_callback_value_has_to_change;
+
 	uint8_t count;
 	uint8_t multiplier;
 	bool is_version_2_1;
+
 	uint32_t counter;
 	SPIFifo spi_fifo;
 	MCP3911_CHANNEL_t channels[CALLBACK_VALUE_CHANNEL_NUM];
