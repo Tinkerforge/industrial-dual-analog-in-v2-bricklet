@@ -200,7 +200,7 @@ bool handle_all_voltages_callback(void) {
 		cb.voltages[0] = mcp3911_get_voltage(0);
 		cb.voltages[1] = mcp3911_get_voltage(1);
 
-		if (cb.voltages[0] == last_voltages[0] && cb.voltages[1] == last_voltages[1]) {
+		if (mcp3911.all_voltages_callback_value_has_to_change && cb.voltages[0] == last_voltages[0] && cb.voltages[1] == last_voltages[1]) {
 			return false;
 		}
 
