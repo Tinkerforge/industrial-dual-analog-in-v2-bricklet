@@ -1,14 +1,9 @@
-
-
 #include "bindings/hal_common.h"
 #include "bindings/bricklet_industrial_dual_analog_in_v2.h"
 
 #define UID "XYZ" // Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0
 
 void check(int rc, const char* msg);
-
-
-
 
 TF_IndustrialDualAnalogInV2 idai;
 

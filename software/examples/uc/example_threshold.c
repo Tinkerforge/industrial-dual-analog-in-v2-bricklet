@@ -1,13 +1,9 @@
-
-
 #include "bindings/hal_common.h"
 #include "bindings/bricklet_industrial_dual_analog_in_v2.h"
 
 #define UID "XYZ" // Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0
 
 void check(int rc, const char* msg);
-
-
 
 // Callback function for voltage callback
 void voltage_handler(TF_IndustrialDualAnalogInV2 *device, uint8_t channel,
@@ -18,7 +14,6 @@ void voltage_handler(TF_IndustrialDualAnalogInV2 *device, uint8_t channel,
 	tf_hal_printf("Voltage: %d 1/%d V\n", voltage, 1000.0);
 	tf_hal_printf("\n");
 }
-
 
 TF_IndustrialDualAnalogInV2 idai;
 
