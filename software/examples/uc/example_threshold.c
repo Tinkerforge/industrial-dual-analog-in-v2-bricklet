@@ -21,16 +21,14 @@ void example_setup(TF_HalContext *hal) {
 	// Create device object
 	check(tf_industrial_dual_analog_in_v2_create(&idai, UID, hal), "create device object");
 
-
 	// Register voltage callback to function voltage_handler
 	tf_industrial_dual_analog_in_v2_register_voltage_callback(&idai,
-	                                                         voltage_handler,
-	                                                         NULL);
+	                                                          voltage_handler,
+	                                                          NULL);
 
 	// Configure threshold for voltage (channel 0) "greater than 10 V"
 	// with a debounce period of 10s (10000ms)
 	tf_industrial_dual_analog_in_v2_set_voltage_callback_configuration(&idai, 0, 10000, false, '>', 10*1000, 0);
-
 }
 
 void example_loop(TF_HalContext *hal) {
