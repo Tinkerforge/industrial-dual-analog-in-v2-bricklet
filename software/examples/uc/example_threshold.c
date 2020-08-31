@@ -14,7 +14,7 @@ static void voltage_handler(TF_IndustrialDualAnalogInV2 *device, uint8_t channel
                             int32_t voltage, void *user_data) {
 	(void)device; (void)user_data; // avoid unused parameter warning
 
-	tf_hal_printf("Channel: %u\n", channel);
+	tf_hal_printf("Channel: %I8u\n", channel);
 	tf_hal_printf("Voltage: %d 1/%d V\n", voltage, 1000.0);
 	tf_hal_printf("\n");
 }
