@@ -1,13 +1,12 @@
 EESchema Schematic File Version 4
-LIBS:industrial-dual-analog-in-v2-cache
 EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "Industrial Dual Analog In"
-Date "2019-08-26"
-Rev "2.1"
+Date "2022-04-08"
+Rev "2.2"
 Comp "Tinkerforge GmbH"
 Comment1 "Licensed under CERN OHL v.1.1"
 Comment2 "Copyright (©) 2018, B.Nordmeyer <bastian@tinkerforge.com>"
@@ -265,7 +264,7 @@ L tinkerforge:TLV272 U1
 U 3 1 53275DE9
 P 1400 6850
 F 0 "U1" H 1350 7050 60  0000 L CNN
-F 1 "LMV342IDRG4" H 1350 6600 60  0000 L CNN
+F 1 "TLV272QDRQ1" H 1350 6600 60  0000 L CNN
 F 2 "kicad-libraries:SOIC8" H 1400 6850 60  0001 C CNN
 F 3 "" H 1400 6850 60  0000 C CNN
 	3    1400 6850
@@ -276,7 +275,7 @@ L tinkerforge:TLV272 U1
 U 1 1 53275DFD
 P 5950 3500
 F 0 "U1" H 5900 3700 60  0000 L CNN
-F 1 "LMV342IDRG4" H 5900 3250 60  0000 L CNN
+F 1 "TLV272QDRQ1" H 5900 3250 60  0000 L CNN
 F 2 "kicad-libraries:SOIC8" H 5950 3500 60  0001 C CNN
 F 3 "" H 5950 3500 60  0000 C CNN
 	1    5950 3500
@@ -487,7 +486,7 @@ L tinkerforge:TLV272 U1
 U 2 1 53278034
 P 5950 1400
 F 0 "U1" H 5900 1600 60  0000 L CNN
-F 1 "LMV342IDRG4" H 5900 1150 60  0000 L CNN
+F 1 "TLV272QDRQ1" H 5900 1150 60  0000 L CNN
 F 2 "kicad-libraries:SOIC8" H 5950 1400 60  0001 C CNN
 F 3 "" H 5950 1400 60  0000 C CNN
 	2    5950 1400
