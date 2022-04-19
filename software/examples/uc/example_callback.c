@@ -9,8 +9,8 @@
 
 void check(int rc, const char* msg);
 
-void example_setup(TF_HalContext *hal);
-void example_loop(TF_HalContext *hal);
+void example_setup(TF_HAL *hal);
+void example_loop(TF_HAL *hal);
 
 
 // Callback function for voltage callback
@@ -25,7 +25,7 @@ static void voltage_handler(TF_IndustrialDualAnalogInV2 *device, uint8_t channel
 
 static TF_IndustrialDualAnalogInV2 idai;
 
-void example_setup(TF_HalContext *hal) {
+void example_setup(TF_HAL *hal) {
 	// Create device object
 	check(tf_industrial_dual_analog_in_v2_create(&idai, UID, hal), "create device object");
 
@@ -38,7 +38,7 @@ void example_setup(TF_HalContext *hal) {
 	tf_industrial_dual_analog_in_v2_set_voltage_callback_configuration(&idai, 0, 1000, false, 'x', 0, 0);
 }
 
-void example_loop(TF_HalContext *hal) {
+void example_loop(TF_HAL *hal) {
 	// Poll for callbacks
 	tf_hal_callback_tick(hal, 0);
 }

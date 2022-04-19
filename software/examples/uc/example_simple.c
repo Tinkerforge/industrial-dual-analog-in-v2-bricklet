@@ -9,13 +9,13 @@
 
 void check(int rc, const char* msg);
 
-void example_setup(TF_HalContext *hal);
-void example_loop(TF_HalContext *hal);
+void example_setup(TF_HAL *hal);
+void example_loop(TF_HAL *hal);
 
 
 static TF_IndustrialDualAnalogInV2 idai;
 
-void example_setup(TF_HalContext *hal) {
+void example_setup(TF_HAL *hal) {
 	// Create device object
 	check(tf_industrial_dual_analog_in_v2_create(&idai, UID, hal), "create device object");
 
@@ -27,7 +27,7 @@ void example_setup(TF_HalContext *hal) {
 	tf_hal_printf("Voltage (Channel 0): %d 1/%d V\n", voltage, 1000);
 }
 
-void example_loop(TF_HalContext *hal) {
+void example_loop(TF_HAL *hal) {
 	// Poll for callbacks
 	tf_hal_callback_tick(hal, 0);
 }
