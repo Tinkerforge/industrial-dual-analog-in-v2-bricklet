@@ -1,17 +1,13 @@
 // This example is not self-contained.
-// It requres usage of the example driver specific to your platform.
+// It requires usage of the example driver specific to your platform.
 // See the HAL documentation.
 
-#include "bindings/hal_common.h"
-#include "bindings/bricklet_industrial_dual_analog_in_v2.h"
+#include "src/bindings/hal_common.h"
+#include "src/bindings/bricklet_industrial_dual_analog_in_v2.h"
 
-#define UID "XYZ" // Change XYZ to the UID of your Industrial Dual Analog In Bricklet 2.0
-
-void check(int rc, const char* msg);
-
+void check(int rc, const char *msg);
 void example_setup(TF_HAL *hal);
 void example_loop(TF_HAL *hal);
-
 
 // Callback function for voltage callback
 static void voltage_handler(TF_IndustrialDualAnalogInV2 *device, uint8_t channel,
@@ -27,7 +23,7 @@ static TF_IndustrialDualAnalogInV2 idai;
 
 void example_setup(TF_HAL *hal) {
 	// Create device object
-	check(tf_industrial_dual_analog_in_v2_create(&idai, UID, hal), "create device object");
+	check(tf_industrial_dual_analog_in_v2_create(&idai, NULL, hal), "create device object");
 
 	// Register voltage callback to function voltage_handler
 	tf_industrial_dual_analog_in_v2_register_voltage_callback(&idai,
