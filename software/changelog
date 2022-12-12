@@ -22,3 +22,6 @@
 
 2020-04-30: 2.0.6 (8612369)
 - Add all voltages callback
+
+2022-12-12: 2.0.7 (TBD)
+- Don't allow ADC value to start with 0x80, it indicates an error

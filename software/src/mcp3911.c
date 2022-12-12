@@ -214,7 +214,7 @@ void mcp3911_task_read_adc(void) {
 		
 		// In case of invalid data we re-configure the ADC 
 		// (done through setting new sampling rate)
-		if((data[0] == 0x80) && (data[1] == 0x00) && (data[2] == 0x00) && (data[3] == 0x80) && (data[4] == 0x00) && (data[5] == 0x00)) {
+		if((data[0] == 0x80) || (data[3] == 0x80)) {
 			mcp3911.rate_new = true;
 			return;
 		}
